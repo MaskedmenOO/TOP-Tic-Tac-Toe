@@ -245,6 +245,7 @@ function ScreenController(){
     let playerTwoName = game.getPlayerTwo();
     let activePlayer = game.getActivePlayer();
     let gameStarted = false;
+    let gameEnded = false;
 
     const playerOneDiv=document.querySelector(".editablePlayerOne");
     const playerTurnDiv=document.querySelector(".turn");
@@ -273,8 +274,13 @@ function ScreenController(){
         if (updatedNameOne) {
             game.setPlayerOneName(updatedNameOne);
             updateScreen();
-            if(gameStarted)
-            playerTurnDiv.textContent = `${activePlayer.name}'s turn...`
+            if(gameEnded){
+            playerTurnDiv.textContent = `${activePlayer.name} is winner. Amazing!`
+            }else if(gameStarted===false){
+                playerTurnDiv.textContent = `Press Start to begin...`
+                }else{
+                    playerTurnDiv.textContent = `${activePlayer.name}'s turn...`
+                }     
         }
     }
     
@@ -284,8 +290,13 @@ function ScreenController(){
         if (updatedNameTwo) {
             game.setPlayerTwoName(updatedNameTwo);
             updateScreen();
-            if(gameStarted)
-            playerTurnDiv.textContent = `${activePlayer.name}'s turn...`
+            if(gameEnded){
+            playerTurnDiv.textContent = `${activePlayer.name} is winner. Amazing!`
+            }else if(gameStarted===false){
+            playerTurnDiv.textContent = `Press Start to begin...`
+            }else{
+                playerTurnDiv.textContent = `${activePlayer.name}'s turn...`
+            }    
         }
     }
 
@@ -331,6 +342,8 @@ function clickHandlerBoard(e) {
     const playerTwoScore = game.getPlayerTwoScore();
 
     if(gameResults){//make the game go to the next round without changing names and changing score
+        gameEnded = true;
+        console.log(gameEnded);
         playerTurnDiv.textContent = gameResults;
         playerOneScoreDiv.textContent = `Score: ${playerOneScore}`;
         playerTwoScoreDiv.textContent = `Score: ${playerTwoScore}`;
@@ -342,7 +355,6 @@ function clickHandlerBoard(e) {
 
 
   function startResetButton(){
-    
     let start = true;
     const startButtonGame = document.querySelector(".startGameButton");
     const nextButtonGame = document.querySelector(".nextGameButton");
@@ -351,9 +363,11 @@ function clickHandlerBoard(e) {
       if(start){
         startGame();
         gameStarted = true;
+        gameEnded = false;
       }else{
         resetGame();
         gameStarted = false;
+        gameEnded = false;
       }
       start =!start
     });
@@ -363,6 +377,7 @@ function clickHandlerBoard(e) {
     })
 
     function startGame(){
+      gameEnded = false; 
       playerTurnDiv.textContent = `${activePlayer.name}'s turn...`
       startButtonGame.textContent = "Reset Game";
       boardDiv.addEventListener("click", clickHandlerBoard);
@@ -370,6 +385,7 @@ function clickHandlerBoard(e) {
   
     function resetGame(){
       startButtonGame.textContent = "Start Game";
+      gameEnded = false; 
       boardDiv.removeEventListener("click", clickHandlerBoard);
       game.resetBoard();
       playerOneScoreDiv.textContent = `Score: 0`;
@@ -384,6 +400,7 @@ function clickHandlerBoard(e) {
         if(gameStarted === false){
             return;
         }
+        gameEnded = false;
         boardDiv.addEventListener("click", clickHandlerBoard);
         game.nextGame();
         updateScreen();
