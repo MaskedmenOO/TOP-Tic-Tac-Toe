@@ -57,11 +57,13 @@ function GameController(playerOneName="Player One", playerTwoName="Player Two"){
     const players=[
         {
             name:playerOneName,
-            token:"x"
+            token:"x",
+            score:0,
         },
         {
             name:playerTwoName,
-            token:"o"
+            token:"o",
+            score:0,
         }
     ];
 
@@ -78,6 +80,9 @@ function GameController(playerOneName="Player One", playerTwoName="Player Two"){
 
     let activePlayer = players[0];
 
+    const getPlayerOneScore = () => players[0].score;
+    const getPlayerTwoScore = () => players[1].score;
+
     const switchPlayerTurn = ()=>{
         activePlayer = activePlayer === players[0] ? players[1] : players[0];
     };
@@ -92,8 +97,16 @@ function GameController(playerOneName="Player One", playerTwoName="Player Two"){
     const resetBoard =()=>{
         board.resetBoard();
         activePlayer = players[0];
+        players[0].score = 0;
+        players[1].score = 0;
         printNewRound();
     } 
+
+    const nextGame = ()=>{
+        board.resetBoard();
+        activePlayer = players[0];
+        printNewRound();
+    }
 
     const playRound = (row, column) => {
         // Drop a token for the current player
@@ -173,6 +186,16 @@ function GameController(playerOneName="Player One", playerTwoName="Player Two"){
             }
         }
 
+        if(OWinner===true){
+            console.log("O player score is "+ (players[1].score + 1) + "X player score is " + players[0].score);
+            players[1].score = players[1].score + 1;
+
+        }else if(XWinner===true){
+            console.log("X player score is "+ (players[0].score + 1) + "O player score is " + players[1].score);
+            players[0].score = players[0].score + 1;
+        }
+
+
         if((OWinner === true )||(XWinner === true) ){
             return `${getActivePlayer().name}'s win! Amazing`;
         }
@@ -209,6 +232,9 @@ function GameController(playerOneName="Player One", playerTwoName="Player Two"){
         setPlayerOneName,
         setPlayerTwoName,
         resetBoard,
+        nextGame,
+        getPlayerOneScore,
+        getPlayerTwoScore,
       };
 }
     
@@ -218,12 +244,51 @@ function ScreenController(){
     let playerOneName = game.getPlayerOne();
     let playerTwoName = game.getPlayerTwo();
     let activePlayer = game.getActivePlayer();
+    let gameStarted = false;
 
     const playerOneDiv=document.querySelector(".editablePlayerOne");
     const playerTurnDiv=document.querySelector(".turn");
     const playerTwoDiv=document.querySelector(".editablePlayerTwo");
+    const buttonOneDiv=document.querySelector(".buttonPlayerOne");
+    const buttonTwoDiv=document.querySelector(".buttonPlayerTwo");
     const boardDiv = document.querySelector('.board');
+    const playerOneScoreDiv = document.querySelector('.playerOneScore');
+    const playerTwoScoreDiv = document.querySelector('.playerTwoScore');
+
+    const editButtonOne = document.createElement("button");
+    const buttonTextOne = document.createTextNode("Change Name");
+    const editButtonTwo = document.createElement("button");
+    const buttonTextTwo = document.createTextNode("Change Name");
+    editButtonOne.appendChild(buttonTextOne);
+    editButtonTwo.appendChild(buttonTextTwo);
+    buttonOneDiv.appendChild(editButtonOne);
+    buttonTwoDiv.appendChild(editButtonTwo);
+
+    editButtonOne.addEventListener("click",changePlayerOneName)
+    editButtonTwo.addEventListener("click",changePlayerTwoName)
+
+    function changePlayerOneName() {
+        let updatedNameOne = prompt("Please write Player One's name");
+        
+        if (updatedNameOne) {
+            game.setPlayerOneName(updatedNameOne);
+            updateScreen();
+            if(gameStarted)
+            playerTurnDiv.textContent = `${activePlayer.name}'s turn...`
+        }
+    }
     
+    function changePlayerTwoName() {
+        let updatedNameTwo = prompt("Please write Player Two's name");
+        
+        if (updatedNameTwo) {
+            game.setPlayerTwoName(updatedNameTwo);
+            updateScreen();
+            if(gameStarted)
+            playerTurnDiv.textContent = `${activePlayer.name}'s turn...`
+        }
+    }
+
     const updateScreen = ()=>{
     boardDiv.textContent = " ";
     //why need to reassign again?
@@ -231,41 +296,10 @@ function ScreenController(){
     playerOneName = game.getPlayerOne();
     playerTwoName = game.getPlayerTwo();
     activePlayer = game.getActivePlayer();
-
-    const editButtonOne = document.createElement("button");
-    const buttonTextOne = document.createTextNode("Change Name");
-    const editButtonTwo = document.createElement("button");
-    const buttonTextTwo = document.createTextNode("Change Name");
     
     playerOneDiv.textContent=`${playerOneName}`
     playerTwoDiv.textContent=`${playerTwoName}`
 
-    editButtonOne.appendChild(buttonTextOne);
-    editButtonTwo.appendChild(buttonTextTwo);
-    playerOneDiv.appendChild(editButtonOne);
-    playerTwoDiv.appendChild(editButtonTwo);
-    
-   function changePlayerOneName() {
-    let updatedNameOne = prompt("Please write Player One's name");
-    
-    if (updatedNameOne) {
-        game.setPlayerOneName(updatedNameOne);
-        updateScreen();
-    }
-}
-
-function changePlayerTwoName() {
-    let updatedNameTwo = prompt("Please write Player Two's name");
-    
-    if (updatedNameTwo) {
-        game.setPlayerTwoName(updatedNameTwo);
-        updateScreen();
-    }
-}
-    
-    editButtonOne.addEventListener("click",changePlayerOneName)
-    editButtonTwo.addEventListener("click",changePlayerTwoName)
-    
         board.forEach((row, index)=>{
         let rowValue= index
         row.forEach((cell,index)=>{
@@ -293,11 +327,15 @@ function clickHandlerBoard(e) {
 
     const gameResults = game.playRound(selectedRow, selectedColumn);
     updateScreen();
+    const playerOneScore = game.getPlayerOneScore();
+    const playerTwoScore = game.getPlayerTwoScore();
 
-    if(gameResults){
+    if(gameResults){//make the game go to the next round without changing names and changing score
         playerTurnDiv.textContent = gameResults;
+        playerOneScoreDiv.textContent = `Score: ${playerOneScore}`;
+        playerTwoScoreDiv.textContent = `Score: ${playerTwoScore}`;
         boardDiv.removeEventListener("click", clickHandlerBoard);
-    }else{
+    }else{// i dont understand why if i reassign active player to here and startResetButton, when i end at 2nd player, it starts with 2nd player
         playerTurnDiv.textContent = `${activePlayer.name}'s turn...`;
     }
   }
@@ -307,16 +345,23 @@ function clickHandlerBoard(e) {
     
     let start = true;
     const startButtonGame = document.querySelector(".startGameButton");
-//continue
+    const nextButtonGame = document.querySelector(".nextGameButton");
+
     startButtonGame.addEventListener("click", ()=>{
       if(start){
         startGame();
+        gameStarted = true;
       }else{
         resetGame();
+        gameStarted = false;
       }
       start =!start
     });
-  
+
+    nextButtonGame.addEventListener("click",()=>{
+    nextGame();
+    })
+
     function startGame(){
       playerTurnDiv.textContent = `${activePlayer.name}'s turn...`
       startButtonGame.textContent = "Reset Game";
@@ -327,10 +372,19 @@ function clickHandlerBoard(e) {
       startButtonGame.textContent = "Start Game";
       boardDiv.removeEventListener("click", clickHandlerBoard);
       game.resetBoard();
+      playerOneScoreDiv.textContent = `Score: 0`;
+      playerTwoScoreDiv.textContent = `Score: 0`;
       game.setPlayerOneName("Player One");
       game.setPlayerTwoName("Player Two");
       playerTurnDiv.textContent = "Press Start to begin...";
       updateScreen();
+    }
+
+    function nextGame(){
+        boardDiv.addEventListener("click", clickHandlerBoard);
+        game.nextGame();
+        updateScreen();
+        playerTurnDiv.textContent = `${activePlayer.name}'s turn...`
     }
   }
 
