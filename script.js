@@ -381,6 +381,9 @@ function clickHandlerBoard(e) {
     }
 
     function nextGame(){
+        if(gameStarted === false){
+            return;
+        }
         boardDiv.addEventListener("click", clickHandlerBoard);
         game.nextGame();
         updateScreen();
